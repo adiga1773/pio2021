@@ -39,6 +39,7 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
@@ -186,13 +187,20 @@ public class AutoTestOne extends LinearOpMode {
 
         targetHeading = 0;
 
+        //starts reading threads
+        Thread  twoMDReadThread = new ReadDistance();
+        twoMDReadThread.start();
+
+        Thread imuReadThread = new ReadIMU();
+        imuReadThread.start();
+
+
+
+
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            //read IMU
-            angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS);
-            gravity  = imu.getGravity();
-            angularVelocity = imu.getAngularVelocity();
+
 
             lastTime = time;
             lastHeading = heading;
@@ -204,11 +212,7 @@ public class AutoTestOne extends LinearOpMode {
             heading = angles.firstAngle;
             spinRate = angularVelocity.xRotationRate;
 
-            //read 2MD
-            forwardRange = fwdDistance.getDistance(DistanceUnit.METER);
-            leftRange = lftDistance.getDistance(DistanceUnit.METER);
-            rearRange = bckDistance.getDistance(DistanceUnit.METER);
-            rightRange = rhtDistance.getDistance(DistanceUnit.METER);
+
 
 
             calculatePosition();
@@ -342,9 +346,17 @@ public class AutoTestOne extends LinearOpMode {
             telemetry.addData("Motors", "X: (%.4f), Y: (%.4f)", fieldX, fieldY);
             telemetry.addData("Located?", "X Tracked: " + !noX + " Y Tracked: " + !noY);
             telemetry.addData("Status", "Run Time: " + runtime.toString());
+            telemetry.addData("Readings", "front: (%.4f), left: (%.4f)", forwardRange, leftRange);
+            telemetry.addData("Readings", "right: (%.4f), back: (%.4f)", rightRange, rearRange);
+            telemetry.addLine("2MD last read: " + last2MDRReadTime);
+
             //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
             telemetry.update();
         }
+
+        //stops reading threads
+        twoMDReadThread.interrupt();
+        imuReadThread.interrupt();
     }
 
     double PIDHeadingControl(double headingError){
@@ -374,7 +386,6 @@ public class AutoTestOne extends LinearOpMode {
 
         return clippedPower;
     }
-
 
     double headingIntegrator(){
         double time = (double) (headingAcquisitionTime-lastHeadingAcquisitionTime) / 1000000000;
@@ -500,4 +511,70 @@ public class AutoTestOne extends LinearOpMode {
         }
 
     }
+
+
+    //reads the 2m distance sensors in a separate thread to reduce input lag
+    double last2MDRReadTime = 0;
+    private class ReadDistance extends Thread
+    {
+        @Override
+        public void run()
+        {
+
+            try
+            {
+                while (!isInterrupted())
+                {
+                    // we record the Y values in the main class to make showing them in telemetry
+                    // easier.
+
+                    //read 2MD
+                    forwardRange = fwdDistance.getDistance(DistanceUnit.METER);
+                    leftRange = lftDistance.getDistance(DistanceUnit.METER);
+                    rearRange = bckDistance.getDistance(DistanceUnit.METER);
+                    rightRange = rhtDistance.getDistance(DistanceUnit.METER);
+                    last2MDRReadTime = (System.nanoTime() / Math.pow(10, 9));
+
+                    idle();
+                }
+            }
+            // interrupted means time to shutdown. note we can stop by detecting isInterrupted = true
+            // or by the interrupted exception thrown from the sleep function.
+            // an error occurred in the run loop.
+            catch (Exception e) {
+
+            }
+        }
+    }
+
+    double lastIMUReadTime = 0;
+    private class ReadIMU extends Thread{
+        @Override
+        public void run()
+        {
+
+            try
+            {
+                while (!isInterrupted())
+                {
+                    // we record the Y values in the main class to make showing them in telemetry
+                    // easier.
+
+                    //read IMU
+                    angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS);
+                    gravity  = imu.getGravity();
+                    angularVelocity = imu.getAngularVelocity();
+                    lastIMUReadTime = (System.nanoTime() / Math.pow(10, 9));
+                    idle();
+                }
+            }
+            // interrupted means time to shutdown. note we can stop by detecting isInterrupted = true
+            // or by the interrupted exception thrown from the sleep function.
+            // an error occurred in the run loop.
+            catch (Exception e) {
+
+            }
+        }
+    }
 }
+
