@@ -39,7 +39,6 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
@@ -50,9 +49,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
+import java.util.ArrayList;
+
 
 /**
- *
+ * ((((real))))
  */
 
 @Autonomous(name="Positioning testing", group="Linear Opmode")
@@ -103,9 +104,9 @@ public class AutoTestOne extends LinearOpMode {
     double fieldX;
     double fieldY;
 
-    double forwardRange = 0;
+    double frontRange = 0;
     double leftRange = 0;
-    double rearRange = 0;
+    double backRange = 0;
     double rightRange = 0;
 
 
@@ -171,9 +172,9 @@ public class AutoTestOne extends LinearOpMode {
         waitForStart();
         runtime.reset();
 
-        forwardRange = fwdDistance.getDistance(DistanceUnit.METER);
+        frontRange = fwdDistance.getDistance(DistanceUnit.METER);
         leftRange = lftDistance.getDistance(DistanceUnit.METER);
-        rearRange = bckDistance.getDistance(DistanceUnit.METER);
+        backRange = bckDistance.getDistance(DistanceUnit.METER);
         rightRange = rhtDistance.getDistance(DistanceUnit.METER);
 
         angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS);
@@ -346,8 +347,8 @@ public class AutoTestOne extends LinearOpMode {
             telemetry.addData("Motors", "X: (%.4f), Y: (%.4f)", fieldX, fieldY);
             telemetry.addData("Located?", "X Tracked: " + !noX + " Y Tracked: " + !noY);
             telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Readings", "front: (%.4f), left: (%.4f)", forwardRange, leftRange);
-            telemetry.addData("Readings", "right: (%.4f), back: (%.4f)", rightRange, rearRange);
+            telemetry.addData("Readings", "front: (%.4f), left: (%.4f)", frontRange, leftRange);
+            telemetry.addData("Readings", "right: (%.4f), back: (%.4f)", rightRange, backRange);
             telemetry.addLine("2MD last read: " + last2MDRReadTime);
 
             //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
@@ -360,10 +361,6 @@ public class AutoTestOne extends LinearOpMode {
     }
 
     double PIDHeadingControl(double headingError){
-
-        if(true){
-            return 0;
-        }
 
         double headingIntegral = headingIntegrator();
         double power = robotConstant.headingKPosition * headingError + robotConstant.headingKIntegral * headingIntegral + robotConstant.headingKDerivative * spinRate;
@@ -387,6 +384,13 @@ public class AutoTestOne extends LinearOpMode {
         return clippedPower;
     }
 
+
+    double headingDerivative(){
+
+
+        return 0;
+    }
+
     double headingIntegrator(){
         double time = (double) (headingAcquisitionTime-lastHeadingAcquisitionTime) / 1000000000;
         robotConstant.headingAddedPart = (targetHeading - (0.5 * (heading + lastHeading)) )  * time;
@@ -404,6 +408,8 @@ public class AutoTestOne extends LinearOpMode {
     }
 
 
+
+    //calculates position through 2m distance sensors, if impossible results uses last working sensor
     boolean latestForward = false;
     boolean latestLeft = false;
     boolean noX = true;
@@ -415,59 +421,59 @@ public class AutoTestOne extends LinearOpMode {
         double back = -9999;
 
         if(heading > -Math.PI/4 && heading < Math.PI/4){//front
-            if(forwardRange < 2.00){
-                forward = Math.cos(heading) * forwardRange;
+            if(frontRange < 2.00){
+                forward = frontRange;
             }
             if(leftRange < 2.00){
-                left = Math.cos(heading) * leftRange;
+                left = leftRange;
             }
             if(rightRange < 2.00){
-                right = Math.cos(heading) * rightRange;
+                right = rightRange;
             }
-            if(rearRange < 2.00){
-                back = Math.cos(heading) * rearRange;
+            if(backRange < 2.00){
+                back = backRange;
             }
         }
         else if(heading >= Math.PI/4 && heading < 3 * Math.PI/4){//right
-            if(forwardRange < 2.00){
-                forward = Math.cos(heading - (Math.PI/2) ) * forwardRange;
+            if(frontRange < 2.00){
+                left = frontRange;
             }
             if(leftRange < 2.00){
-                left = Math.cos(heading - (Math.PI/2) ) * leftRange;
+                forward = left;
             }
             if(rightRange < 2.00){
-                right = Math.cos(heading - (Math.PI/2) ) * rightRange;
+                back = rightRange;
             }
-            if(rearRange < 2.00){
-                back = Math.cos(heading - (Math.PI/2) ) * rearRange;
+            if(backRange < 2.00){
+                right = backRange;
             }
         }
         else if(heading >= 3 * Math.PI/4 ||  heading < -3 * Math.PI/4){//back
-            if(forwardRange < 2.00){
-                forward = Math.cos(heading - (Math.PI) ) * forwardRange;
+            if(frontRange < 2.00){
+                backRange = frontRange;
             }
             if(leftRange < 2.00){
-                left = Math.cos(heading - (Math.PI) ) * leftRange;
+                right = leftRange;
             }
             if(rightRange < 2.00){
-                right = Math.cos(heading - (Math.PI) ) * rightRange;
+                left = rightRange;
             }
-            if(rearRange < 2.00){
-                back = Math.cos(heading - (Math.PI) ) * rearRange;
+            if(backRange < 2.00){
+                forward = backRange;
             }
         }
         else if(heading <= -Math.PI/4 && heading > -3 * Math.PI/4){//left
-            if(forwardRange < 2.00){
-                forward = Math.cos(heading + (Math.PI/2) ) * forwardRange;
+            if(frontRange < 2.00){
+                left = frontRange;
             }
             if(leftRange < 2.00){
-                left = Math.cos(heading + (Math.PI/2) ) * leftRange;
+                back = leftRange;
             }
             if(rightRange < 2.00){
-                right = Math.cos(heading + (Math.PI/2) ) * rightRange;
+                forward = rightRange;
             }
-            if(rearRange < 2.00){
-                back = Math.cos(heading + (Math.PI/2) ) * rearRange;
+            if(backRange < 2.00){
+                left = backRange;
             }
         }
 
@@ -515,6 +521,7 @@ public class AutoTestOne extends LinearOpMode {
 
     //reads the 2m distance sensors in a separate thread to reduce input lag
     double last2MDRReadTime = 0;
+    ArrayList<TwoMDValue> TwoMDs = new ArrayList<>(); //to be used for derivatives and stuff
     private class ReadDistance extends Thread
     {
         @Override
@@ -529,11 +536,14 @@ public class AutoTestOne extends LinearOpMode {
                     // easier.
 
                     //read 2MD
-                    forwardRange = fwdDistance.getDistance(DistanceUnit.METER);
+                    frontRange = fwdDistance.getDistance(DistanceUnit.METER);
                     leftRange = lftDistance.getDistance(DistanceUnit.METER);
-                    rearRange = bckDistance.getDistance(DistanceUnit.METER);
+                    backRange = bckDistance.getDistance(DistanceUnit.METER);
                     rightRange = rhtDistance.getDistance(DistanceUnit.METER);
                     last2MDRReadTime = (System.nanoTime() / Math.pow(10, 9));
+
+                    TwoMDValue latestRead = new TwoMDValue( frontRange, backRange, leftRange, rightRange, last2MDRReadTime);
+                    TwoMDs.add(latestRead);
 
                     idle();
                 }
@@ -548,6 +558,7 @@ public class AutoTestOne extends LinearOpMode {
     }
 
     double lastIMUReadTime = 0;
+    ArrayList<IMUValues> IMUReads = new ArrayList<>();
     private class ReadIMU extends Thread{
         @Override
         public void run()
@@ -565,6 +576,11 @@ public class AutoTestOne extends LinearOpMode {
                     gravity  = imu.getGravity();
                     angularVelocity = imu.getAngularVelocity();
                     lastIMUReadTime = (System.nanoTime() / Math.pow(10, 9));
+                    Position pos = imu.getPosition();
+
+                    IMUValues values = new IMUValues(angles, gravity, angularVelocity, pos, lastIMUReadTime);
+                    IMUReads.add(values);
+
                     idle();
                 }
             }
