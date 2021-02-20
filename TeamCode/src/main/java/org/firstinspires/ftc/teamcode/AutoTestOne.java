@@ -350,6 +350,15 @@ public class AutoTestOne extends LinearOpMode {
             telemetry.addData("Readings", "front: (%.4f), left: (%.4f)", frontRange, leftRange);
             telemetry.addData("Readings", "right: (%.4f), back: (%.4f)", rightRange, backRange);
             telemetry.addLine("2MD last read: " + last2MDRReadTime);
+            telemetry.addLine("Cycle Time Main: " + (time-lastTime));
+
+            try {
+                double IMUCycleTime = IMUReads.get(IMUReads.size() - 1).getReadTime() - IMUReads.get(IMUReads.size() - 2).getReadTime();
+                double TwoMDCycleTime = TwoMDs.get(TwoMDs.size() - 1).getReadTime() - TwoMDs.get(TwoMDs.size() - 2).getReadTime();
+                telemetry.addData("Read Threads Time", "IMU: (%.4f), 2MD: (%.4f)", IMUCycleTime, TwoMDCycleTime);
+            }catch (Exception e){
+                //lol
+            }
 
             //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
             telemetry.update();
@@ -363,7 +372,7 @@ public class AutoTestOne extends LinearOpMode {
     double PIDHeadingControl(double headingError){
 
         double headingIntegral = headingIntegrator();
-        double power = robotConstant.headingKPosition * headingError + robotConstant.headingKIntegral * headingIntegral + robotConstant.headingKDerivative * spinRate;
+        double power = robotConstant.headingKPosition * headingError + robotConstant.headingKIntegral * headingIntegral + robotConstant.headingKDerivative * smoothSpinRate();
 
         //clipping stuff in case of integral saturation
         double clippedPower = Range.clip(power, -0.5, 0.5);
@@ -384,12 +393,34 @@ public class AutoTestOne extends LinearOpMode {
         return clippedPower;
     }
 
+    //the rotation reads from the last half second or 10 reads, whichever is first
+    double smoothSpinRate(){
+        ArrayList<IMUValues> IMUClone = new ArrayList<>();
 
-    double headingDerivative(){
+        int imuCloneSize = IMUClone.size(); //makes it thread safe or something idk
+        for(int i = imuCloneSize -1; i >= Math.max(imuCloneSize - 11, 0); i--){
+            IMUClone.add(IMUReads.get(i));
+        }
 
+        double spin = IMUClone.get(0).getAngularVelocity().xRotationRate;
+        double firstTime = IMUClone.get(0).getReadTime();
 
-        return 0;
+        double average = spin;
+
+        int count = 1;
+        for(int i = 1; i < IMUClone.size(); i++){
+            if(firstTime - 0.5 > IMUClone.get(i).getReadTime()){//breaks if older than 0.5 seconds
+                break;
+            }
+            average = (IMUClone.get(i).getAngularVelocity().xRotationRate + IMUClone.get(i-1).getAngularVelocity().xRotationRate) * 0.5;
+            count++;
+        }
+        average /= count;
+
+        telemetry.addData("SSR", "Count: (%.4f), Result: (%.4f)", count, average);
+        return average;
     }
+
 
     double headingIntegrator(){
         double time = (double) (headingAcquisitionTime-lastHeadingAcquisitionTime) / 1000000000;

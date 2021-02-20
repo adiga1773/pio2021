@@ -19,4 +19,20 @@ public class IMUValues {
         this.position = position;
         this.readTime = readTime;
     }
+
+    public double getReadTime() {
+        return readTime;
+    }
+    public Acceleration getGravity() {
+        return gravity;
+    }
+    public AngularVelocity getAngularVelocity() {
+        return angularVelocity;
+    }
+    public Orientation getAngles() {
+        return angles;
+    }
+    public Position getPosition() {
+        return position;
+    }
 }

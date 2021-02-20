@@ -64,8 +64,8 @@ public class competitionReady extends OpMode
     private DcMotor leftBackDrive     = null;
     private DcMotor rightFrontDrive   = null;
     private DcMotor rightBackDrive    = null;
-    private DcMotorEx leftShooterDrive  = null;
-    private DcMotorEx rightShooterDrive = null;
+    private DcMotor leftShooterDrive  = null;
+    private DcMotor rightShooterDrive = null;
     private DcMotor intakeDrive       = null;
     private DcMotor armMotor          = null;
 
@@ -88,13 +88,13 @@ public class competitionReady extends OpMode
         rightFrontDrive   = hardwareMap.get(DcMotor.class, "front right motor");
         rightBackDrive    = hardwareMap.get(DcMotor.class, "back right motor");
 
-        leftShooterDrive  = hardwareMap.get(DcMotorEx.class, "left shooter motor");
-        leftShooterDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftShooterDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftShooterDrive  = hardwareMap.get(DcMotor.class, "left shooter motor");
+        //leftShooterDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //leftShooterDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        rightShooterDrive = hardwareMap.get(DcMotorEx.class, "right shooter motor");
-        rightShooterDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightShooterDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightShooterDrive = hardwareMap.get(DcMotor.class, "right shooter motor");
+        //rightShooterDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //rightShooterDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         intakeDrive       = hardwareMap.get(DcMotor.class, "intake motor");
 
@@ -197,20 +197,18 @@ public class competitionReady extends OpMode
 
         }
         if (shooterActive) {
-            leftShooterDrive.setVelocity(shooterVelocity, AngleUnit.RADIANS);
-            rightShooterDrive.setVelocity(shooterVelocity, AngleUnit.RADIANS);
-            try {
-                if (Math.abs((leftShooterDrive.getVelocity() / shooterVelocity) - 1) > 0.10) {
-                    telemetry.addLine("Motor had speed drop at " + runtime.toString());
-                }
-            }catch (Exception e){
-                //lol
-            }
+            leftShooterDrive.setPower(1.0);
+            rightShooterDrive.setPower(1.0);
+
+        }
+        else{
+            leftShooterDrive.setPower(0);
+            rightShooterDrive.setPower(0);
         }
         if (gamepad1.b && !gamepad1.right_bumper) {
             shooterActive = false;
-            leftShooterDrive.setPower(shooterPower);
-            rightShooterDrive.setPower(shooterPower);
+            leftShooterDrive.setPower(-0.5);
+            rightShooterDrive.setPower(-0.5);
         }
 
         //leftShooterDrive.setPower(shooterPower);
