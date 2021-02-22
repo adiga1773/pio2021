@@ -7,13 +7,13 @@ public class PIDLoop {
     //CONSTRUCTORS
     public PIDLoop(){
         this(0, 0, 0, 0, -1, 1);
-    };
+    }
     public PIDLoop(double kp, double ki, double kd){
         this(kp, ki, kd, 0, -1, 1);
-    };
+    }
     public PIDLoop(double kp, double ki, double kd, double goal){
         this(kp, ki, kd, goal, -1, 1);
-    };
+    }
     public PIDLoop(double kp, double ki, double kd, double goal, double outMin, double outMax){
         this.kp = kp;
         this.ki = ki;
@@ -21,7 +21,7 @@ public class PIDLoop {
         this.goal = goal;
         this.outMin = outMin;
         this.outMax = outMax;
-    };
+    }
 
     public void reset(){
         iTerm = 0;
@@ -32,7 +32,7 @@ public class PIDLoop {
         if(pTerm * kp > outMax || pTerm * kp < outMin){
             iTerm = 0;
         } else {
-            iTerm += pTerm * (time - preTime);
+            iTerm = Math.min(outMax, Math.max(outMin, iTerm + pTerm * (time - preTime)));
         }
         if(time != preTime) {
             dTerm = -(input - preInput) / (time - preTime);
@@ -43,7 +43,7 @@ public class PIDLoop {
     }
 
     public double read(){
-        return kp * pTerm + ki * iTerm + kd * dTerm;
+        return Math.min(outMax, Math.max(outMin, kp * pTerm + ki * iTerm + kd * dTerm));
     }
     public double p(){
         return pTerm;
