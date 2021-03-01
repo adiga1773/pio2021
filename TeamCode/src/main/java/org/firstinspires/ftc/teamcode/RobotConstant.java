@@ -5,7 +5,7 @@ public class RobotConstant {
     //make sure its in radians!
     public double headingKPosition = 0.70;
     public double headingKIntegral = 2.74;
-    public double headingKDerivative = -0.09;
+    public double headingKDerivative = -0.11;
     public boolean headingIntegralClamped = false;
     public double headingIntegral = 0;
     public double headingAddedPart;

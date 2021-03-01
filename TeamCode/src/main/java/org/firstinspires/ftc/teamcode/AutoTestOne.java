@@ -186,6 +186,8 @@ public class AutoTestOne extends LinearOpMode {
         heading = angles.firstAngle;
         headingAcquisitionTime = angles.acquisitionTime;
 
+
+
         targetHeading = 0;
 
         //starts reading threads
@@ -343,21 +345,25 @@ public class AutoTestOne extends LinearOpMode {
             gripperPower *= speedFactor;
             gripperServo.setPower(gripperPower);
 
+            Position posIMU = imu.getPosition();
+
             // Show the elapsed game time and wheel power.
-            telemetry.addData("Motors", "X: (%.4f), Y: (%.4f)", fieldX, fieldY);
+            telemetry.addData("Positions", "X: (%.4f), Y: (%.4f)", fieldX, fieldY);
+            telemetry.addData("IMUPositions", "X: (%.4f), Y: (%.4f)", posIMU.x, posIMU.y);
             telemetry.addData("Located?", "X Tracked: " + !noX + " Y Tracked: " + !noY);
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Readings", "front: (%.4f), left: (%.4f)", frontRange, leftRange);
             telemetry.addData("Readings", "right: (%.4f), back: (%.4f)", rightRange, backRange);
             telemetry.addLine("2MD last read: " + last2MDRReadTime);
             telemetry.addLine("Cycle Time Main: " + (time-lastTime));
+            telemetry.addLine("Heading: " + heading);
 
             try {
                 double IMUCycleTime = IMUReads.get(IMUReads.size() - 1).getReadTime() - IMUReads.get(IMUReads.size() - 2).getReadTime();
                 double TwoMDCycleTime = TwoMDs.get(TwoMDs.size() - 1).getReadTime() - TwoMDs.get(TwoMDs.size() - 2).getReadTime();
                 telemetry.addData("Read Threads Time", "IMU: (%.4f), 2MD: (%.4f)", IMUCycleTime, TwoMDCycleTime);
             }catch (Exception e){
-                //lol
+                telemetry.addLine("Reading threads failed");
             }
 
             //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
@@ -372,7 +378,8 @@ public class AutoTestOne extends LinearOpMode {
     double PIDHeadingControl(double headingError){
 
         double headingIntegral = headingIntegrator();
-        double power = robotConstant.headingKPosition * headingError + robotConstant.headingKIntegral * headingIntegral + robotConstant.headingKDerivative * smoothSpinRate();
+        double smoothSpinRate = smoothSpinRate();
+        double power = robotConstant.headingKPosition * headingError + robotConstant.headingKIntegral * headingIntegral + robotConstant.headingKDerivative * smoothSpinRate;
 
         //clipping stuff in case of integral saturation
         double clippedPower = Range.clip(power, -0.5, 0.5);
@@ -380,7 +387,7 @@ public class AutoTestOne extends LinearOpMode {
         boolean signMatch = (headingError * robotConstant.headingIntegral) > 0;
         if(saturated && signMatch){
 
-            power = robotConstant.headingKPosition * headingError + robotConstant.headingKDerivative * spinRate;
+            power = robotConstant.headingKPosition * headingError + robotConstant.headingKDerivative * smoothSpinRate;
             clippedPower = Range.clip(power, -0.5, 0.5);
             robotConstant.headingIntegral -= robotConstant.headingAddedPart;
         }
@@ -388,37 +395,41 @@ public class AutoTestOne extends LinearOpMode {
 
         telemetry.addLine("HPError: " + robotConstant.headingKPosition * headingError);
         telemetry.addLine("HIError: " + robotConstant.headingKIntegral * headingIntegral);
-        telemetry.addLine("HDError: " + robotConstant.headingKDerivative * spinRate);
+        telemetry.addLine("HDError: " + robotConstant.headingKDerivative * smoothSpinRate);
 
         return clippedPower;
     }
 
     //the rotation reads from the last half second or 10 reads, whichever is first
     double smoothSpinRate(){
-        ArrayList<IMUValues> IMUClone = new ArrayList<>();
+        try {
+            ArrayList<IMUValues> IMUClone = new ArrayList<>();
 
-        int imuCloneSize = IMUClone.size(); //makes it thread safe or something idk
-        for(int i = imuCloneSize -1; i >= Math.max(imuCloneSize - 11, 0); i--){
-            IMUClone.add(IMUReads.get(i));
-        }
-
-        double spin = IMUClone.get(0).getAngularVelocity().xRotationRate;
-        double firstTime = IMUClone.get(0).getReadTime();
-
-        double average = spin;
-
-        int count = 1;
-        for(int i = 1; i < IMUClone.size(); i++){
-            if(firstTime - 0.5 > IMUClone.get(i).getReadTime()){//breaks if older than 0.5 seconds
-                break;
+            int imuCloneSize = IMUClone.size(); //makes it thread safe or something idk
+            for (int i = imuCloneSize - 1; i >= Math.max(imuCloneSize - 11, 0); i--) {
+                IMUClone.add(IMUReads.get(i));
             }
-            average = (IMUClone.get(i).getAngularVelocity().xRotationRate + IMUClone.get(i-1).getAngularVelocity().xRotationRate) * 0.5;
-            count++;
-        }
-        average /= count;
 
-        telemetry.addData("SSR", "Count: (%.4f), Result: (%.4f)", count, average);
-        return average;
+            double spin = IMUClone.get(0).getAngularVelocity().xRotationRate;
+            double firstTime = IMUClone.get(0).getReadTime();
+
+            double average = spin;
+
+            int count = 1;
+            for (int i = 1; i < IMUClone.size(); i++) {
+                if (firstTime - 0.5 > IMUClone.get(i).getReadTime()) {//breaks if older than 0.5 seconds
+                    break;
+                }
+                average = (IMUClone.get(i).getAngularVelocity().xRotationRate + IMUClone.get(i - 1).getAngularVelocity().xRotationRate) * 0.5;
+                count++;
+            }
+            average /= count;
+
+            telemetry.addData("SSR", "Count: (%.4f), Result: (%.4f)", count, average);
+            return average;
+        }catch (Exception e){
+            return spinRate;
+        }
     }
 
 
@@ -427,7 +438,7 @@ public class AutoTestOne extends LinearOpMode {
         robotConstant.headingAddedPart = (targetHeading - (0.5 * (heading + lastHeading)) )  * time;
         robotConstant.headingIntegral += robotConstant.headingAddedPart;
 
-        telemetry.addLine("CYCLE TIME: " + time);
+        telemetry.addLine("Heading PID Cycle Time: " + time);
         return robotConstant.headingIntegral;
     }
 
@@ -465,7 +476,7 @@ public class AutoTestOne extends LinearOpMode {
                 back = backRange;
             }
         }
-        else if(heading >= Math.PI/4 && heading < 3 * Math.PI/4){//right
+        else if((heading >= -Math.PI/4 && heading < -3 * Math.PI/4) || (heading>= Math.PI * 5/4 && heading <= Math.PI * 7/4)){//right
             if(frontRange < 2.00){
                 left = frontRange;
             }
@@ -493,7 +504,7 @@ public class AutoTestOne extends LinearOpMode {
                 forward = backRange;
             }
         }
-        else if(heading <= -Math.PI/4 && heading > -3 * Math.PI/4){//left
+        else if(heading <= Math.PI/4 && heading > 3 * Math.PI/4){//left
             if(frontRange < 2.00){
                 left = frontRange;
             }
@@ -590,6 +601,7 @@ public class AutoTestOne extends LinearOpMode {
 
     double lastIMUReadTime = 0;
     ArrayList<IMUValues> IMUReads = new ArrayList<>();
+    Position positionIMU;
     private class ReadIMU extends Thread{
         @Override
         public void run()
@@ -608,6 +620,7 @@ public class AutoTestOne extends LinearOpMode {
                     angularVelocity = imu.getAngularVelocity();
                     lastIMUReadTime = (System.nanoTime() / Math.pow(10, 9));
                     Position pos = imu.getPosition();
+                    positionIMU = pos;
 
                     IMUValues values = new IMUValues(angles, gravity, angularVelocity, pos, lastIMUReadTime);
                     IMUReads.add(values);
