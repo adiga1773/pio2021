@@ -51,7 +51,7 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list!!
  */
 
-@TeleOp(name="Basic: Linear OpMode", group="Linear Opmode")
+@TeleOp(name="Two wheel drive robot", group="Linear Opmode")
 public class MegaWheels extends LinearOpMode {
 
     // Declare OpMode members.
@@ -70,10 +70,10 @@ public class MegaWheels extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        leftDrive1  = hardwareMap.get(DcMotor.class, "left_drive_1");
-        leftDrive2 = hardwareMap.get(DcMotor.class, "left_drive_2");
-        rightDrive1 = hardwareMap.get(DcMotor.class, "right_drive_1");
-        rightDrive2 = hardwareMap.get(DcMotor.class, "right_drive_2");
+        leftDrive1  = hardwareMap.get(DcMotor.class, "left motor 1");
+        leftDrive2 = hardwareMap.get(DcMotor.class, "left motor 2");
+        rightDrive1 = hardwareMap.get(DcMotor.class, "right motor 1");
+        rightDrive2 = hardwareMap.get(DcMotor.class, "right motor 2");
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery

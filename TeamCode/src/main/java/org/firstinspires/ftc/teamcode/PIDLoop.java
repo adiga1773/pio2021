@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 public class PIDLoop {
-    public double kp, ki, kd, goal, outMin, outMax;
+    public double kp, ki, kd, goal, outMin, outMax, minError = 0;
     private double pTerm, iTerm, dTerm, preInput = 0, preTime = 0;
 
     //CONSTRUCTORS
@@ -28,21 +28,25 @@ public class PIDLoop {
     }
 
     public double update(double input, double time){
-        pTerm = goal - input;
+        if(Math.abs(pTerm) <= minError){
+            pTerm = 0;
+        }else{
+            pTerm = goal - input;
+        }
         if(pTerm * kp > outMax || pTerm * kp < outMin){
             iTerm = 0;
         } else {
-            iTerm = Math.min(outMax, Math.max(outMin, iTerm + pTerm * (time - preTime)));
+            iTerm = Math.min(outMax, Math.max(outMin, ki * (iTerm + pTerm * (time - preTime)))) / ki;
         }
         if(time != preTime) {
             dTerm = -(input - preInput) / (time - preTime);
         }
         preInput = input;
         preTime = time;
-        return Math.min(outMax, Math.max(outMin, kp * pTerm + ki * iTerm + kd * dTerm));
+        return this.output();
     }
 
-    public double read(){
+    public double output(){
         return Math.min(outMax, Math.max(outMin, kp * pTerm + ki * iTerm + kd * dTerm));
     }
     public double p(){
