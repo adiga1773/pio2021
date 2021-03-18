@@ -77,7 +77,6 @@ public class AssistedTwoWheel extends LinearOpMode {
     Orientation angles;
 
     double heading;
-    double targetHeading = 0;
 
 
     @Override
@@ -117,8 +116,6 @@ public class AssistedTwoWheel extends LinearOpMode {
         waitForStart();
         runtime.reset();
 
-        targetHeading = 0;
-
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS);
@@ -139,7 +136,7 @@ public class AssistedTwoWheel extends LinearOpMode {
             if(gamepad1.right_stick_x == 0) {
                 turn = HDGHold.update(-heading, time);
             }else{
-                turn = HDGHold.commandTurn(-gamepad1.right_stick_x, 2 * Math.PI, time);
+                turn = HDGHold.commandTurn(-heading, -gamepad1.right_stick_x * 2 * Math.PI, time);
             }
             leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
             rightPower   = Range.clip(drive - turn, -1.0, 1.0) ;

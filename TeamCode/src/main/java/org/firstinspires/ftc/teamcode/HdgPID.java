@@ -22,7 +22,7 @@ public class HdgPID extends PIDLoop{
 
     public double update(double input, double time){
         pTerm = calculateP(input, time);
-        iTerm = calculateI(input, time);
+        iTerm = calculateI(time);
         dTerm = calculateD(input, time);
         return output();
     }

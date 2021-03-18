@@ -35,7 +35,7 @@ public class PIDLoop {
     //Use this to get results
     public double update(double input, double time){
         pTerm = calculateP(input, time);
-        iTerm = calculateI(input, time);
+        iTerm = calculateI(time);
         dTerm = calculateD(input, time);
         return this.output();
     }
@@ -47,7 +47,7 @@ public class PIDLoop {
         return goal - input;
     }
 
-    public double calculateI(double input, double time){
+    public double calculateI(double time){
         double tempI;
         if(pTerm * kp > outMax || pTerm * kp < outMin){
             tempI = 0;
