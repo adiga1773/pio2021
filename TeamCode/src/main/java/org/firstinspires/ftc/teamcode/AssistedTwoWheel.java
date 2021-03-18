@@ -85,7 +85,7 @@ public class AssistedTwoWheel extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        HdgPID HDGHold = new HdgPID(0.7, 0.64, 0.09);
+        HdgPID HDGHold = new HdgPID(Robot.headingKP, Robot.headingKI, Robot.headingKD);
 
         //imu stuffs
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
