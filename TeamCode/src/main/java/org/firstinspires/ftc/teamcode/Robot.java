@@ -6,14 +6,14 @@ public class Robot {
     public static double headingKP = 0.70;
     public static double headingKI = 2.74;
     public static double headingKD = 0.09;
-    //public static boolean headingIntegralClamped = false;
-    //public static double headingIntegral = 0;
-    //public static double headingAddedPart;
-    //public static boolean headingsForward = true;
+    public boolean headingIntegralClamped = false;
+    public double headingIntegral = 0;
+    public double headingAddedPart;
+    public boolean headingsForward = true;
 
-    //public double leftZero = 0;
-    //public double frontZero = 0;
-    //public double backZero = 0;
-    //public double rightZero = 0;
+    public double leftZero = 0;
+    public double frontZero = 0;
+    public double backZero = 0;
+    public double rightZero = 0;
 
 }

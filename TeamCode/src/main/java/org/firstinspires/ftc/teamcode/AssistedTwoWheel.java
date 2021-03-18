@@ -75,8 +75,6 @@ public class AssistedTwoWheel extends LinearOpMode {
 
     // State used for updating telemetry
     Orientation angles;
-    Acceleration gravity;
-    AngularVelocity angularVelocity;
 
     double heading;
     double targetHeading = 0;
@@ -117,7 +115,6 @@ public class AssistedTwoWheel extends LinearOpMode {
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
-        angularVelocity = imu.getAngularVelocity();
         runtime.reset();
 
         targetHeading = 0;
@@ -137,9 +134,13 @@ public class AssistedTwoWheel extends LinearOpMode {
 
             // POV Mode uses left stick to go forward, and right stick to turn.
             // - This uses basic math to combine motions and is easier to drive straight.
-            HDGHold.moveGoal(-gamepad1.right_stick_x * 2 * Math.PI, time);
             double drive = -gamepad1.left_stick_y;
-            double turn  =  HDGHold.update(-heading, time);
+            double turn;
+            if(gamepad1.right_stick_x == 0) {
+                turn = HDGHold.update(-heading, time);
+            }else{
+                turn = HDGHold.commandTurn(-gamepad1.right_stick_x, 2 * Math.PI, time);
+            }
             leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
             rightPower   = Range.clip(drive - turn, -1.0, 1.0) ;
 
@@ -148,7 +149,6 @@ public class AssistedTwoWheel extends LinearOpMode {
             leftDrive1.setPower(leftPower);
             rightDrive1.setPower(rightPower);
 
-            // Show the elapsed game time and wheel power.
             telemetry.addData("HDG ", "(%.2f)R (%.2f)°", heading, (heading * 180 / Math.PI));
             telemetry.addData("PID Status: ", "P: (%.2f), I: (%.2f), D: (%.2f)", HDGHold.p(), HDGHold.i(), HDGHold.d());
             telemetry.addData("Run time", runtime.toString());

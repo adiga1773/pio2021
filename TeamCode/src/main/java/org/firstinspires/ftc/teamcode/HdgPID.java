@@ -1,8 +1,11 @@
 package org.firstinspires.ftc.teamcode;
 
 //This PID loop is only to be used with RADIANS
-
+//This PID loop accounts for the fact that moving past PI will go to -PI
+//This PID loop may not work as intended if refresh rate is low
 public class HdgPID extends PIDLoop{
+    protected PIDLoop turn = new PIDLoop(0.5, 2, 0.07);
+
     public HdgPID(){
         this(0, 0, 0, 0, -1, 1);
     }
@@ -18,21 +21,36 @@ public class HdgPID extends PIDLoop{
     }
 
     public double update(double input, double time){
-        calculateP(input, time);
-        super.calculateI(input, time);
-        super.calculateD(input, time);
-        return super.output();
+        pTerm = calculateP(input, time);
+        iTerm = calculateI(input, time);
+        dTerm = calculateD(input, time);
+        return output();
     }
 
     public double calculateP(double input, double time){
         if(Math.abs(goal-input) < Math.min(Math.abs(goal + 2 * Math.PI - input), Math.abs(goal - 2 * Math.PI - input))){
-            pTerm = goal-input;
-        }else if(Math.abs(goal + 2 * Math.PI -input) < Math.min(Math.abs(goal - input), Math.abs(goal - 2 * Math.PI - input))){
-            pTerm = goal + 2 * Math.PI - input;
+            return goal-input;
+        }else if(Math.abs(goal + 2 * Math.PI -input) < Math.abs(goal - 2 * Math.PI - input)){
+            return goal + 2 * Math.PI - input;
         }else{
-            pTerm = goal - 2 * Math.PI - input;
+            return goal - 2 * Math.PI - input;
         }
-        return pTerm;
+    }
+
+    public double calculateD(double input, double time){
+        double tempD = dTerm;
+        if(time != dPreTime) {
+            if (Math.abs((input - preInput) / (time - dPreTime)) < Math.min(Math.abs((input + 2 * Math.PI - preInput) / (time - dPreTime)), Math.abs((input - 2 * Math.PI - preInput) / (time - dPreTime)))) {
+                tempD = -(input - preInput) / (time - dPreTime);
+            }else if(Math.abs((input + 2 * Math.PI - preInput) / (time - dPreTime)) < Math.abs((input - 2 * Math.PI - preInput) / (time - dPreTime))){
+                tempD = -(input + 2 * Math.PI - preInput) / (time - dPreTime);
+            }else{
+                tempD = -(input - 2 * Math.PI - preInput) / (time - dPreTime);
+            }
+        }
+        preInput = input;
+        dPreTime = time;
+        return tempD;
     }
 
     //Method to move the goal by a certain amount
@@ -47,4 +65,10 @@ public class HdgPID extends PIDLoop{
         gPreTime = time;
     }
 
+    public double commandTurn(double input, double turnRate, double time){
+        reset(time);
+        goal = input;
+        turn.goal = turnRate;
+        return turn.update(this.calculateD(input, time), time);
+    }
 }

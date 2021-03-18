@@ -31,6 +31,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -52,7 +53,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
  */
 
 @TeleOp(name="PID HEADING", group="Iterative Opmode")
-//@Disabled
+@Disabled
 public class redonePIDHeading extends OpMode
 {
     // Declare OpMode members.
@@ -93,7 +94,7 @@ public class redonePIDHeading extends OpMode
 
 
     //heading only
-    RobotConstant headingPIDConstants = new RobotConstant();
+    Robot headingPIDConstants = new Robot();
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -325,26 +326,26 @@ public class redonePIDHeading extends OpMode
         //PID tuning stuff
         if(gamepad2.x){//p
             if(gamepad2.dpad_up){
-                headingPIDConstants.headingKPosition += 0.01;
+                headingPIDConstants.headingKP += 0.01;
             }
             if(gamepad2.dpad_down){
-                headingPIDConstants.headingKPosition -= 0.01;
+                headingPIDConstants.headingKP -= 0.01;
             }
         }
         if(gamepad2.y){//i
             if(gamepad2.dpad_up){
-                headingPIDConstants.headingKIntegral += 0.01;
+                headingPIDConstants.headingKI += 0.01;
             }
             if(gamepad2.dpad_down){
-                headingPIDConstants.headingKIntegral -= 0.01;
+                headingPIDConstants.headingKI -= 0.01;
             }
         }
         if(gamepad2.b){//d
             if(gamepad2.dpad_up){
-                headingPIDConstants.headingKDerivative += 0.01;
+                headingPIDConstants.headingKD += 0.01;
             }
             if(gamepad2.dpad_down){
-                headingPIDConstants.headingKDerivative -= 0.01;
+                headingPIDConstants.headingKD -= 0.01;
             }
         }
 
@@ -353,13 +354,13 @@ public class redonePIDHeading extends OpMode
         telemetry.addData("Motors", "turn (%.2f), right wheel (%.2f)", turn, rightFrontPower);
         telemetry.addData("target and heading", "heading (%.3f), target (%.3f)", heading, targetHeading);
         telemetry.addData("sensors", "rot rate (%.3f), heading Int (%.3f)", spinRate, headingPIDConstants.headingIntegral );
-        telemetry.addLine("K values: kP:" + headingPIDConstants.headingKPosition + " kI:" + headingPIDConstants.headingKIntegral + " kD:" + headingPIDConstants.headingKDerivative);
+        telemetry.addLine("K values: kP:" + headingPIDConstants.headingKP + " kI:" + headingPIDConstants.headingKI + " kD:" + headingPIDConstants.headingKD);
     }
 
 
     double PIDHeadingControl(double headingError){
         double headingIntegral = headingIntegrator();
-        double power = headingPIDConstants.headingKPosition * headingError + headingPIDConstants.headingKIntegral * headingIntegral + headingPIDConstants.headingKDerivative * spinRate;
+        double power = headingPIDConstants.headingKP * headingError + headingPIDConstants.headingKI * headingIntegral + headingPIDConstants.headingKD * spinRate;
 
         //clipping stuff in case of integral saturation
         double clippedPower = Range.clip(power, -0.5, 0.5);
@@ -367,15 +368,15 @@ public class redonePIDHeading extends OpMode
         boolean signMatch = (headingError * headingPIDConstants.headingIntegral) > 0;
         if(saturated && signMatch){
 
-            power = headingPIDConstants.headingKPosition * headingError + headingPIDConstants.headingKDerivative * spinRate;
+            power = headingPIDConstants.headingKP * headingError + headingPIDConstants.headingKD * spinRate;
             clippedPower = Range.clip(power, -0.5, 0.5);
             headingPIDConstants.headingIntegral -= headingPIDConstants.headingAddedPart;
         }
 
 
-        telemetry.addLine("HPError: " + headingPIDConstants.headingKPosition * headingError);
-        telemetry.addLine("HIError: " + headingPIDConstants.headingKIntegral * headingIntegral);
-        telemetry.addLine("HDError: " + headingPIDConstants.headingKDerivative * spinRate);
+        telemetry.addLine("HPError: " + headingPIDConstants.headingKP * headingError);
+        telemetry.addLine("HIError: " + headingPIDConstants.headingKI * headingIntegral);
+        telemetry.addLine("HDError: " + headingPIDConstants.headingKD * spinRate);
 
         return clippedPower;
     }

@@ -27,39 +27,45 @@ public class PIDLoop {
         iTerm = 0;
     }
 
+    public void reset(double time){
+        reset();
+        iPreTime = time;
+    }
+
     //Use this to get results
     public double update(double input, double time){
-        calculateP(input, time);
-        calculateI(input, time);
-        calculateD(input, time);
+        pTerm = calculateP(input, time);
+        iTerm = calculateI(input, time);
+        dTerm = calculateD(input, time);
         return this.output();
     }
 
     public double calculateP(double input, double time){
-        pTerm = goal - input;
-        if(Math.abs(pTerm) < minError){
-            pTerm = 0;
+        if(Math.abs(goal - input) < minError){
+            return 0;
         }
-        return pTerm;
+        return goal - input;
     }
 
     public double calculateI(double input, double time){
+        double tempI;
         if(pTerm * kp > outMax || pTerm * kp < outMin){
-            iTerm = 0;
+            tempI = 0;
         } else {
-            iTerm = Math.min(outMax, Math.max(outMin, ki * (iTerm + pTerm * (time - iPreTime)))) / ki;
+            tempI = Math.min(outMax, Math.max(outMin, ki * (iTerm + pTerm * (time - iPreTime)))) / ki;
         }
         iPreTime = time;
-        return iTerm;
+        return tempI;
     }
 
     public double calculateD(double input, double time){
+        double tempD = dTerm;
         if(time != dPreTime) {
-            dTerm = -(input - preInput) / (time - dPreTime);
+            tempD = -(input - preInput) / (time - dPreTime);
         }
         preInput = input;
         dPreTime = time;
-        return dTerm;
+        return tempD;
     }
 
     //Use this to get previous results

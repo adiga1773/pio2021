@@ -110,7 +110,7 @@ public class AutoTestOne extends LinearOpMode {
 
 
     //heading only
-    RobotConstant robotConstant = new RobotConstant();
+    Robot robotConstant = new Robot();
 
     @Override
     public void runOpMode() {
@@ -355,7 +355,7 @@ public class AutoTestOne extends LinearOpMode {
         }
 
         double headingIntegral = headingIntegrator();
-        double power = robotConstant.headingKPosition * headingError + robotConstant.headingKIntegral * headingIntegral + robotConstant.headingKDerivative * spinRate;
+        double power = robotConstant.headingKP * headingError + robotConstant.headingKI * headingIntegral + robotConstant.headingKD * spinRate;
 
         //clipping stuff in case of integral saturation
         double clippedPower = Range.clip(power, -0.5, 0.5);
@@ -363,15 +363,15 @@ public class AutoTestOne extends LinearOpMode {
         boolean signMatch = (headingError * robotConstant.headingIntegral) > 0;
         if(saturated && signMatch){
 
-            power = robotConstant.headingKPosition * headingError + robotConstant.headingKDerivative * spinRate;
+            power = robotConstant.headingKP * headingError + robotConstant.headingKD * spinRate;
             clippedPower = Range.clip(power, -0.5, 0.5);
             robotConstant.headingIntegral -= robotConstant.headingAddedPart;
         }
 
 
-        telemetry.addLine("HPError: " + robotConstant.headingKPosition * headingError);
-        telemetry.addLine("HIError: " + robotConstant.headingKIntegral * headingIntegral);
-        telemetry.addLine("HDError: " + robotConstant.headingKDerivative * spinRate);
+        telemetry.addLine("HPError: " + robotConstant.headingKP * headingError);
+        telemetry.addLine("HIError: " + robotConstant.headingKI * headingIntegral);
+        telemetry.addLine("HDError: " + robotConstant.headingKD * spinRate);
 
         return clippedPower;
     }
