@@ -52,7 +52,7 @@ import com.qualcomm.robotcore.util.Range;
  */
 
 @TeleOp(name="SWC Constructor", group="Iterative Opmode")
-//@Disabled
+@Disabled
 public class ConstructorTest extends OpMode
 {
     private ElapsedTime runtime = new ElapsedTime();

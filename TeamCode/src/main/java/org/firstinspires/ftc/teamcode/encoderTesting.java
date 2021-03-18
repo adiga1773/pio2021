@@ -43,7 +43,7 @@ import com.qualcomm.robotcore.util.Range;
  */
 
 @TeleOp(name="Encoder Testing", group="Iterative Opmode")
-//@Disabled
+@Disabled
 public class encoderTesting extends OpMode
 {
     private ElapsedTime runtime = new ElapsedTime();
