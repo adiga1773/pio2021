@@ -146,7 +146,8 @@ public class AssistedTwoWheel extends LinearOpMode {
             leftDrive1.setPower(leftPower);
             rightDrive1.setPower(rightPower);
 
-            telemetry.addData("HDG ", "(%.2f)R (%.2f)°", heading, (heading * 180 / Math.PI));
+            telemetry.addData("Current Heading: ", "(%.2f)πR (%.0f)°", heading / Math.PI, (heading * 180 / Math.PI));
+            telemetry.addData("Target Heading: ", "(%.2f)πR", HDGHold.goal / Math.PI);
             telemetry.addData("PID Status: ", "P: (%.2f), I: (%.2f), D: (%.2f)", HDGHold.p(), HDGHold.i(), HDGHold.d());
             telemetry.addData("Run time", runtime.toString());
             telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
